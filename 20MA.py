@@ -17,8 +17,8 @@ pd.set_option('display.unicode.east_asian_width', True)
 
 # # Global Variables Setting
 url  = 'https://api.binance.com/'
-coin = 'BTCUSDT'
-coin_2 = 'ETHUSDT'
+BTC = 'BTCUSDT'
+ETH = 'ETHUSDT'
 
 # # Line Notify #尾數t
 def Line(msg):   
@@ -31,26 +31,6 @@ def Line(msg):
 
 # # Get Market Data
 def GetKline(url, symbol, interval):
-    try:
-        data = requests.get(url + 'api/v3/klines', params={'symbol': symbol, 'interval': interval, 'limit': 1000}).json()
-    except Exception as e:
-        print ('Error! problem is {}'.format(e.args[0]))
-    tmp  = []
-    pair = []
-    for base in data:
-        tmp  = []
-        for i in range(0,6):
-            if i == 0:
-                base[i] = datetime.fromtimestamp(base[i]/1000)
-            tmp.append(base[i])
-        pair.append(tmp)
-    df = pd.DataFrame(pair, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
-    df.date = pd.to_datetime(df.date)
-    df.set_index("date", inplace=True)
-    df = df.astype(float)
-    return df
-
-def GetETHKline(url, symbol, interval):
     try:
         data = requests.get(url + 'api/v3/klines', params={'symbol': symbol, 'interval': interval, 'limit': 1000}).json()
     except Exception as e:
@@ -83,25 +63,25 @@ def MA(df, period):
 
 if __name__ == "__main__":
     while True:
-        kline = GetKline(url, coin, '1d')
-        kline_2 = GetETHKline(url, coin_2, '1d')
-        index = MA(kline, 20)
-        index_2 = MA(kline_2, 20)
-        price = GetAvgPrice(url, coin)
-        price_2 = GetAvgPrice(url, coin_2)
-        bias = (price - index[-1])/index[-1] * 100
-        bias_2 = (price_2 - index_2[-1])/index_2[-1] * 100
-        if price > index[-1]:
-            msg = f'BTC 當前價格為: {price}, 高於20日均線: {index[-1]}, 🔥🔥🔥＊買入訊號＊,均線乖離率：{bias}%'
+        kline_BTC = GetKline(url, BTC, '1d')
+        kline_ETH = GetKline(url, ETH, '1d')
+        index_BTC = MA(kline_BTC, 20)
+        index_ETH = MA(kline_ETH, 20)
+        price_BTC = GetAvgPrice(url, BTC)
+        price_ETH = GetAvgPrice(url, ETH)
+        bias_BTC = (price_BTC - index_BTC[-1])/index_BTC[-1] * 100
+        bias_ETH = (price_ETH - index_ETH[-1])/index_ETH[-1] * 100
+        if price_BTC > index_BTC[-1]:
+            msg = f'BTC 當前價格為: {int(price_BTC)}, 高於20日均線: {int(index_BTC[-1])} \n 🔥＊牛市看漲＊🔥 \n \n 均線乖離率：{int(bias_BTC)}%'
             Line(msg)
         else:
-            msg = f'BTC 當前價格為: {price}, 低於20日均線: {index[-1]}, 🤮🤮🤮＊賣出訊號＊,均線乖離率：{bias}%'
+            msg = f'BTC 當前價格為: {int(price_BTC)}, 低於20日均線: {int(index_BTC[-1])} \n 🤮＊熊市看跌＊🤮 \n \n  均線乖離率：{int(bias_BTC)}%'
             Line(msg)
-        if price_2 > index_2[-1]:
-            msg = f'ETH 當前價格為: {price_2}, 高於20日均線: {index_2[-1]}, 🔥🔥🔥＊買入訊號＊,均線乖離率：{bias_2}%'
+        if price_ETH > index_ETH[-1]:
+            msg = f'ETH 當前價格為: {int(price_ETH)}, 高於20日均線: {int(index_ETH[-1])} \n 🔥＊牛市看漲＊🔥 \n \n  均線乖離率：{int(bias_ETH)}%'
             Line(msg)
         else:
-            msg = f'ETH 當前價格為: {price_2}, 低於20日均線: {index_2[-1]}, 🤮🤮🤮＊賣出訊號＊,均線乖離率：{bias_2}%'
+            msg = f'ETH 當前價格為: {int(price_ETH)}, 低於20日均線: {int(index_ETH[-1])} \n 🤮＊熊市看跌＊🤮 \n \n 均線乖離率：{int(bias_ETH)}%'
             Line(msg)
 
         time.sleep(14400) # 4小時執行一次
